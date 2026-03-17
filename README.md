@@ -6,6 +6,8 @@ A Minesweeper-inspired browser game set in the Strait of Hormuz. Clear sea mines
 
 **[▶ Play Now](https://naklitechie.github.io/hormuz-minesweeper/)** — Runs directly in your browser.
 
+⭐ **Like it?** Give this repo a star!
+
 ## Run Locally
 
 Just open `index.html` in any modern browser. No server needed.
@@ -55,6 +57,12 @@ No build step, no dependencies — single HTML file (~400 lines).
 ## License
 
 Public domain / MIT — use it however you want.
+
+---
+
+## Built With
+
+Created in a couple of hours with **Claude** and **Qwen** AI assistants.
 
 ---
 
