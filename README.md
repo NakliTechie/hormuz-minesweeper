@@ -4,18 +4,22 @@ A Minesweeper-inspired browser game set in the Strait of Hormuz. Clear sea mines
 
 ## Play
 
-**[GitHub Pages Link]** - Deploy and play directly in your browser.
+**[▶ Play Now](https://naklitechie.github.io/hormuz-minesweeper/)** — Runs directly in your browser.
 
-## How to Run Locally
+## Run Locally
+
+Just open `index.html` in any modern browser. No server needed.
 
 ```bash
-# Using Python
-python3 -m http.server 8080
+# Option 1: Double-click the file
+open index.html
 
+# Option 2: If you prefer a local server
+python3 -m http.server 8080
 # Then open http://localhost:8080
 ```
 
-No build step required — single HTML file with CDN dependencies.
+No build step, no dependencies — single HTML file (~400 lines).
 
 ## Gameplay
 
@@ -47,13 +51,6 @@ No build step required — single HTML file with CDN dependencies.
 - Leaflet.js 1.9.4 (map rendering)
 - CartoDB Voyager tiles (light theme basemap)
 - Vanilla JavaScript, no frameworks
-
-## Deployment (GitHub Pages)
-
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Enable Pages from the `main` branch root
-4. Your game will be live at `https://<username>.github.io/<repo>/`
 
 ## License
 
