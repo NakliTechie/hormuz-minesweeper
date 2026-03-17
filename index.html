@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☠ HORMUZ MINEFIELD</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#dce8f0;color:#1a2a3a;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100vh}
+h1{color:#0d3b6e;font-size:1.55rem;letter-spacing:4px;margin-bottom:3px}
+.sub{font-size:.68rem;color:#5a7a9a;letter-spacing:2px;margin-bottom:10px}
+#hud{display:flex;gap:24px;background:#fff;border:2px solid #b0c8dc;padding:8px 20px;margin-bottom:8px;align-items:center;box-shadow:0 2px 6px rgba(0,50,100,.1)}
+.hb{text-align:center}
+.hl{font-size:.58rem;color:#7a9ab0;letter-spacing:1px;display:block;text-transform:uppercase}
+.hv{font-size:1.25rem;color:#0d3b6e;font-weight:bold;min-width:58px;display:block}
+.hv.ok{color:#1a7a1a}.hv.bad{color:#c0200a}
+#ctrl{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+select,button{background:#fff;border:2px solid #b0c8dc;color:#0d3b6e;padding:5px 11px;font-family:'Courier New',monospace;font-size:.76rem;cursor:pointer;letter-spacing:1px;transition:all .15s;box-shadow:0 1px 3px rgba(0,50,100,.1)}
+button:hover{background:#e0edf7;border-color:#0d3b6e}
+button.on{background:#c0200a;border-color:#a01808;color:#fff}
+#wrap{position:relative;border:3px solid #0d3b6e;box-shadow:0 4px 18px rgba(0,50,100,.25)}
+#map{width:860px;height:460px}
+#gc{position:absolute;top:0;left:0;width:860px;height:460px;cursor:crosshair;z-index:1000}
+#ov{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.82);z-index:500}
+#ov.show{display:flex}
+.mb{background:#fff;padding:26px 34px;text-align:center;max-width:420px;border:2px solid #b0c8dc;box-shadow:0 4px 16px rgba(0,50,100,.15)}
+.mb.win{border-color:#1a7a1a}.mb.lose{border-color:#c0200a}
+.mb h2{font-size:1.2rem;margin-bottom:10px;letter-spacing:2px;color:#0d3b6e}
+.mb.win h2{color:#1a7a1a}.mb.lose h2{color:#c0200a}
+.mb p{color:#4a6a80;font-size:.78rem;margin-bottom:4px;line-height:1.5}
+.mb .wa{color:#c05000;font-size:.76rem;margin-top:8px;margin-bottom:14px;font-weight:bold}
+#ticker{margin-top:8px;font-size:.62rem;color:#6a8a9a;letter-spacing:1px;max-width:860px}
+.leaflet-control-attribution{font-size:9px!important}
+</style>
+</head>
+<body>
+
+<h1>☠ HORMUZ MINEFIELD</h1>
+<p class="sub">CLEAR SAFE PASSAGE FOR OIL TANKERS · IRGCN WATCHES CLOSELY</p>
+
+<div id="hud">
+  <div class="hb"><span class="hl">MINES LEFT</span><span class="hv" id="hMines">--</span></div>
+  <div class="hb"><span class="hl">TIME</span><span class="hv" id="hTime">00:00</span></div>
+  <div class="hb"><span class="hl">WAVE</span><span class="hv" id="hWave">1</span></div>
+  <div class="hb"><span class="hl">STATUS</span><span class="hv" id="hStatus">READY</span></div>
+</div>
+
+<div id="ctrl">
+  <select id="selDiff">
+    <option value="easy">EASY — 22 mines</option>
+    <option value="medium" selected>MEDIUM — 42 mines</option>
+    <option value="hard">HARD — 65 mines</option>
+    <option value="realistic">REALISTIC — escalating</option>
+  </select>
+  <button id="btnNew">◼ NEW GAME</button>
+  <button id="btnFlag">🚩 FLAG: OFF</button>
+  <span style="font-size:.68rem;color:#223">· right-click also flags</span>
+</div>
+
+<div id="wrap">
+  <div id="map"></div>
+  <canvas id="gc" width="860" height="460"></canvas>
+  <div id="ov">
+    <div class="mb" id="msgbox">
+      <h2 id="msgTitle"></h2>
+      <p id="msgBody"></p>
+      <p class="wa" id="msgWave" style="display:none"></p>
+      <button id="btnNext" style="margin-top:4px">CONTINUE</button>
+    </div>
+  </div>
+</div>
+
+<div id="ticker">📡 IRGCN FEED — Awaiting deployment orders…</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+'use strict';
+
+// ── PRE-COMPUTED LAND MASK ──────────────────────────────────────────────────
+// Sampled from CartoDB Voyager tiles at zoom 8, center (26.4, 56.5)
+// 1 = land, 0 = water (playable)
+// Water cells: 300 / 665
+
+const MASK = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+const WCELLS = 297;
+
+// ── GRID ─────────────────────────────────────────────────────────────────────
+
+const MW = 860, MH = 460;
+const COLS = 35, ROWS = 19;
+const CW = MW / COLS, CH = MH / ROWS;
+
+// MASK is pre-computed above (sampled from actual map tiles)
+// buildMask is a no-op now since MASK is static
+function buildMask() {
+  // MASK already defined as constant above
+}
+
+// ── GAME STATE ───────────────────────────────────────────────────────────────
+
+const BASE_MINES = {easy:22, medium:42, hard:65, realistic:42};
+let G = {};
+
+function diff() { return document.getElementById('selDiff').value; }
+
+function waveMines(w) {
+  const base = BASE_MINES[diff()];
+  return diff()==='realistic' ? Math.min(base+(w-1)*13, WCELLS-25) : base;
+}
+
+function freshState(wave) {
+  if (G.timer) clearInterval(G.timer);
+  G = {
+    board: null, rev: [], flag: [],
+    over:false, won:false, firstClick:true, flagMode:false,
+    wave, mines: waveMines(wave), secs:0, timer:null, hitCell:null
+  };
+  for (let r=0;r<ROWS;r++){G.rev.push(new Array(COLS).fill(false));G.flag.push(new Array(COLS).fill(false));}
+}
+
+function buildBoard(sr, sc) {
+  G.board = Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({mine:false,n:0})));
+  const cands = [];
+  for (let r=0;r<ROWS;r++)
+    for (let c=0;c<COLS;c++)
+      if (!MASK[r][c] && !(Math.abs(r-sr)<=1 && Math.abs(c-sc)<=1)) cands.push([r,c]);
+  for (let i=cands.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}
+  const n = Math.min(G.mines, cands.length);
+  for (let i=0;i<n;i++) G.board[cands[i][0]][cands[i][1]].mine=true;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++){
+    if (G.board[r][c].mine) continue;
+    let cnt=0;
+    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++){
+      if (!dr&&!dc) continue;
+      const nr=r+dr,nc=c+dc;
+      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&G.board[nr][nc].mine) cnt++;
+    }
+    G.board[r][c].n=cnt;
+  }
+}
+
+function flood(startR, startC) {
+  const q = [[startR, startC]];
+  while (q.length) {
+    const [r,c] = q.pop();
+    if (r<0||r>=ROWS||c<0||c>=COLS) continue;
+    if (G.rev[r][c]||G.flag[r][c]||MASK[r][c]) continue;
+    G.rev[r][c]=true;
+    if (G.board[r][c].n===0&&!G.board[r][c].mine)
+      for (let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr||dc) q.push([r+dr,c+dc]);
+  }
+}
+
+function checkWin() {
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++)
+    if (!MASK[r][c]&&!G.board[r][c].mine&&!G.rev[r][c]) return false;
+  return true;
+}
+
+function flagCount() { let n=0; for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(G.flag[r][c]) n++; return n; }
+
+function onCell(r,c) {
+  if (G.over||G.won||MASK[r][c]) return;
+  if (G.flagMode) { if (!G.rev[r][c]){G.flag[r][c]=!G.flag[r][c]; hud(); draw();} return; }
+  if (G.flag[r][c]||G.rev[r][c]) return;
+  if (G.firstClick) {
+    G.firstClick=false;
+    buildBoard(r,c);
+    G.timer=setInterval(()=>{G.secs++;hud();},1000);
+    setStatus('ACTIVE','ok');
+  }
+  if (G.board[r][c].mine) {
+    G.rev[r][c]=true; G.hitCell=[r,c]; G.over=true;
+    clearInterval(G.timer);
+    for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++) if(G.board[rr][cc].mine) G.rev[rr][cc]=true;
+    draw(); showMsg('lose'); return;
+  }
+  flood(r,c);
+  if (checkWin()) { G.won=true; clearInterval(G.timer); draw(); showMsg('win'); return; }
+  hud(); draw();
+}
+
+function onRightCell(r,c) {
+  if (G.over||G.won||G.firstClick||MASK[r][c]||G.rev[r][c]) return;
+  G.flag[r][c]=!G.flag[r][c]; hud(); draw();
+}
+
+// ── HUD ─────────────────────────────────────────────────────────────────────
+
+function hud() {
+  document.getElementById('hMines').textContent = G.mines - flagCount();
+  const m=String(Math.floor(G.secs/60)).padStart(2,'0'), s=String(G.secs%60).padStart(2,'0');
+  document.getElementById('hTime').textContent=`${m}:${s}`;
+  document.getElementById('hWave').textContent=G.wave;
+}
+
+function setStatus(txt,cls='') {
+  const el=document.getElementById('hStatus');
+  el.textContent=txt; el.className='hv'+(cls?' '+cls:'');
+}
+
+// ── CANVAS RENDERING ─────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+const NC = ['','#0d5fba','#1a7a1a','#c05000','#c0200a','#8800aa','#008888','#333','#777'];
+let hover = null;
+
+function cellPx(r, c) {
+  return { x: Math.round(c * CW), y: Math.round(r * CH),
+           w: Math.round((c+1)*CW) - Math.round(c*CW),
+           h: Math.round((r+1)*CH) - Math.round(r*CH) };
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (MASK[r][c]) continue;
+    const {x,y,w,h} = cellPx(r,c);
+    const cell = G.board?G.board[r][c]:null;
+    const rev=G.rev[r][c], flag=G.flag[r][c];
+    const isHover = hover&&hover[0]===r&&hover[1]===c;
+    const isHit = G.hitCell&&G.hitCell[0]===r&&G.hitCell[1]===c;
+
+    if (rev) {
+      ctx.fillStyle = (cell&&cell.mine) ? (isHit?'rgba(220,40,20,.90)':'rgba(200,60,40,.80)') : 'rgba(215,232,248,.88)';
+    } else if (flag) {
+      ctx.fillStyle='rgba(255,235,210,.90)';
+    } else {
+      ctx.fillStyle=isHover?'rgba(180,180,190,.75)':'rgba(150,150,160,.60)';
+    }
+    ctx.fillRect(x,y,w,h);
+
+    // Border: raised-look for unrevealed (light top-left, dark bottom-right)
+    if (!rev && !flag) {
+      ctx.strokeStyle='rgba(200,200,210,.90)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(x+1,y+h-1); ctx.lineTo(x+1,y+1); ctx.lineTo(x+w-1,y+1); ctx.stroke();
+      ctx.strokeStyle='rgba(100,100,120,.75)';
+      ctx.beginPath(); ctx.moveTo(x+1,y+h-1); ctx.lineTo(x+w-1,y+h-1); ctx.lineTo(x+w-1,y+1); ctx.stroke();
+    } else {
+      ctx.strokeStyle='rgba(120,120,140,.55)';
+      ctx.lineWidth=1;
+      ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+    }
+
+    const fs=Math.max(9,Math.min(w,h)*.54);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const cx=x+w/2, cy=y+h/2;
+    if (rev&&cell) {
+      if (cell.mine) { ctx.font=`${fs}px serif`; ctx.fillText('💣',cx,cy); }
+      else if (cell.n>0) { ctx.font=`bold ${fs}px monospace`; ctx.fillStyle=NC[cell.n]||'#fff'; ctx.fillText(cell.n,cx,cy); }
+    } else if (flag) {
+      ctx.font=`${fs}px serif`; ctx.fillText('🚩',cx,cy);
+    }
+  }
+}
+
+// ── INPUT ────────────────────────────────────────────────────────────────────
+
+function evCell(e) {
+  const rect = canvas.getBoundingClientRect();
+  // scale in case CSS size != canvas pixel size
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const px = (e.clientX - rect.left) * sx;
+  const py = (e.clientY - rect.top)  * sy;
+  const c = Math.floor(px / CW);
+  const r = Math.floor(py / CH);
+  if (r >= 0 && r < ROWS && c >= 0 && c < COLS) return [r, c];
+  return null;
+}
+
+canvas.addEventListener('click',e=>{ const c=evCell(e); if(c) onCell(c[0],c[1]); });
+canvas.addEventListener('contextmenu',e=>{ e.preventDefault(); const c=evCell(e); if(c) onRightCell(c[0],c[1]); });
+canvas.addEventListener('mousemove',e=>{
+  const c=evCell(e);
+  const was=hover;
+  hover=(c&&!MASK[c[0]][c[1]])?c:null;
+  if (JSON.stringify(hover)!==JSON.stringify(was)) draw();
+});
+canvas.addEventListener('mouseleave',()=>{ hover=null; draw(); });
+
+// ── MESSAGES ─────────────────────────────────────────────────────────────────
+
+const WIN_MSGS=[
+  "Strait cleared. Tankers are moving. Iranian naval command is furious.",
+  "All mines neutralised. BP shareholders briefly celebrate.",
+  "Lane secured. Iran denies placing any mines. Obviously.",
+  "Mission accomplished. The 5th Fleet sends a thumbs-up emoji.",
+  "Oil prices drop $2. You're basically OPEC now.",
+  "Excellent work. The Hormuz Authority files this under 'routine maintenance'.",
+];
+const LOSE_MSGS=[
+  "BOOM. Your vessel is now a debris field. Iran is shocked. Shocked.",
+  "You found a mine. With your hull. IRGCN releases a statement of congratulations.",
+  "KA-BOOM. Lloyd's of London is already on the phone.",
+  "Direct hit. Tehran is pleased. The tanker crew is less so.",
+  "The strait just got more complicated. Iran says it was a 'naval exercise'.",
+  "Navigational incident logged. Oil futures spike 4%. Nice work.",
+];
+
+function showMsg(type) {
+  const box=document.getElementById('msgbox');
+  const waveEl=document.getElementById('msgWave');
+  box.className='mb '+type;
+  if (type==='win') {
+    document.getElementById('msgTitle').textContent='✓ STRAIT CLEARED';
+    document.getElementById('msgBody').textContent=WIN_MSGS[Math.floor(Math.random()*WIN_MSGS.length)];
+    setStatus('CLEARED','ok');
+    if (diff()==='realistic') {
+      const nw=G.wave+1, nm=waveMines(nw);
+      waveEl.textContent=`⚠ WAVE ${nw}: Iran remotely deploys ${nm} fresh mines. Good luck, admiral.`;
+      waveEl.style.display='';
+      document.getElementById('btnNext').textContent=`FACE WAVE ${nw}`;
+    } else {
+      waveEl.style.display='none';
+      document.getElementById('btnNext').textContent='PLAY AGAIN';
+    }
+  } else {
+    document.getElementById('msgTitle').textContent='💥 MINE DETONATION';
+    document.getElementById('msgBody').textContent=LOSE_MSGS[Math.floor(Math.random()*LOSE_MSGS.length)];
+    waveEl.style.display='none';
+    document.getElementById('btnNext').textContent='TRY AGAIN';
+    setStatus('KIA','bad');
+  }
+  document.getElementById('ov').classList.add('show');
+}
+
+document.getElementById('btnNext').addEventListener('click',()=>{
+  document.getElementById('ov').classList.remove('show');
+  startGame(G.won&&diff()==='realistic' ? G.wave+1 : 1);
+});
+document.getElementById('btnNew').addEventListener('click',()=>startGame(1));
+document.getElementById('btnFlag').addEventListener('click',()=>{
+  G.flagMode=!G.flagMode;
+  const b=document.getElementById('btnFlag');
+  b.textContent=`🚩 FLAG: ${G.flagMode?'ON':'OFF'}`;
+  b.classList.toggle('on',G.flagMode);
+});
+
+// ── TICKER ───────────────────────────────────────────────────────────────────
+
+const TICKS=[
+  "📡 IRGCN FEED — Strait nominal. 3 VLCCs transiting eastbound.",
+  "⚓ US 5th Fleet: 'We're just here for the vibes.'",
+  "🛢️ Brent crude: elevated. Hormuz risk premium: also elevated.",
+  "🚢 Lloyd's of London increases Hormuz war-risk surcharge. Again.",
+  "📻 IRGCN spokesman: 'We have placed no mines. Why do you ask?'",
+  "🛸 NRO satellite detects cylindrical objects in shipping lane.",
+  "🇮🇷 Iranian state TV: 'Naval exercise proceeds entirely as planned.'",
+  "⚠️ UK MATO issues maritime advisory. Avoid southern approach.",
+  "🌊 Sea state: calm. Visibility: good. Mine count: classified.",
+  "📈 Insurance premiums up 40% since last incident. Nobody surprised.",
+  "🚤 IRGCN speedboats observed near tanker. 'Routine inspection.'",
+  "🔴 US CENTCOM: 'The situation is being monitored.' (It always is.)",
+];
+let ti=0;
+setInterval(()=>{ ti=(ti+1)%TICKS.length; document.getElementById('ticker').textContent=TICKS[ti]; },4200);
+
+// ── LEAFLET ──────────────────────────────────────────────────────────────────
+
+const MAP = L.map('map',{
+  center:[26.4,56.5], zoom:8,
+  zoomControl:false, dragging:false, scrollWheelZoom:false,
+  doubleClickZoom:false, touchZoom:false, keyboard:false,
+  attributionControl:true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd', maxZoom:19,
+}).addTo(MAP);
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+
+function startGame(wave=1) {
+  freshState(wave);
+  hud(); setStatus('READY');
+  document.getElementById('btnFlag').textContent='🚩 FLAG: OFF';
+  document.getElementById('btnFlag').classList.remove('on');
+  document.getElementById('ov').classList.remove('show');
+  draw();
+}
+
+// MASK is pre-computed, so we can start immediately
+buildMask();
+startGame(1);
+</script>
+</body>
+</html>
