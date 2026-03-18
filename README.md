@@ -36,6 +36,7 @@ No build step, no dependencies — single HTML file (~500 lines).
 |-----|----------|--------|
 | 🗺️ Strait of Hormuz | Persian Gulf | IRGCN patrols |
 | 🗺️ Bab el-Mandeb Strait | Red Sea / Yemen | Houthi rebels |
+| 🗺️ Malacca Strait | Singapore Strait / Malaysia | Pirates |
 
 ## Difficulties
 
@@ -106,12 +107,14 @@ Open `auto-sampler.html` in your browser. This tool:
 
 ### Example Coordinates
 
-| Chokepoint | Coordinates | Zoom |
-|------------|-------------|------|
-| Suez Canal | [30.0, 32.3] | 9 |
-| Panama Canal | [9.1, -79.6] | 9 |
-| Malacca Strait | [4.2, 100.5] | 8 |
-| Bosphorus | [41.1, 29.1] | 10 |
+| Chokepoint | Coordinates | Zoom | Status |
+|------------|-------------|------|--------|
+| Strait of Hormuz | [26.4, 56.5] | 8 | ✅ Added |
+| Bab el-Mandeb | [12.65, 43.35] | 9 | ✅ Added |
+| Malacca Strait | [2.5, 101.5] | 8 | ✅ Added |
+| Suez Canal | [30.0, 32.3] | 9 | _Ready to add_ |
+| Panama Canal | [9.1, -79.6] | 9 | _Ready to add_ |
+| Bosphorus | [41.1, 29.1] | 10 | _Ready to add_ |
 
 ### Tips
 
