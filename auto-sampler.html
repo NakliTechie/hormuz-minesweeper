@@ -61,10 +61,14 @@ const COLS = 35, ROWS = 19;
 const CW = 860/COLS, CH = 460/ROWS;
 let waterCells = new Set();
 
+// Malacca Strait - centered on the strait waters
+const MAP_CENTER = [2.5, 101.5];
+const MAP_ZOOM = 8;
+
 // Create map with ALL interactions disabled
 const MAP = L.map('map', {
-  center: [12.65, 43.35],
-  zoom: 9,
+  center: MAP_CENTER,
+  zoom: MAP_ZOOM,
   zoomControl: false,
   attributionControl: true,
   dragging: false,
@@ -89,11 +93,11 @@ function drawGrid() {
     for (let c = 0; c < COLS; c++) {
       const key = `${r},${c}`;
       const isWater = waterCells.has(key);
-      
-      const lat1 = MAP.unproject([c * CW, r * CH], 9).lat;
-      const lng1 = MAP.unproject([c * CW, r * CH], 9).lng;
-      const lat2 = MAP.unproject([(c+1) * CW, (r+1) * CH], 9).lat;
-      const lng2 = MAP.unproject([(c+1) * CW, (r+1) * CH], 9).lng;
+
+      const lat1 = MAP.unproject([c * CW, r * CH], MAP_ZOOM).lat;
+      const lng1 = MAP.unproject([c * CW, r * CH], MAP_ZOOM).lng;
+      const lat2 = MAP.unproject([(c+1) * CW, (r+1) * CH], MAP_ZOOM).lat;
+      const lng2 = MAP.unproject([(c+1) * CW, (r+1) * CH], MAP_ZOOM).lng;
       
       const bounds = [[lat1, lng1], [lat2, lng2]];
       L.rectangle(bounds, {
@@ -109,11 +113,11 @@ function drawGrid() {
 }
 
 function lockMap() {
-  MAP.setView([12.65, 43.35], 9);
+  MAP.setView(MAP_CENTER, MAP_ZOOM);
   document.getElementById('btnLock').textContent = '✓ LOCKED';
   document.getElementById('status').style.display = 'block';
   setTimeout(() => {
-    document.getElementById('status').textContent = '✓ Map Locked! Ready to sample.';
+    document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Malacca Strait)`;
   }, 500);
 }
 
@@ -247,6 +251,7 @@ drawGrid();
 // Auto-lock after 3 seconds
 setTimeout(() => {
   lockMap();
+  document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Malacca Strait)`;
 }, 3000);
 </script>
 </body>

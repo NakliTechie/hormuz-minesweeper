@@ -23,7 +23,7 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
 #wrap{position:relative;border:3px solid #0d3b6e;box-shadow:0 4px 18px rgba(0,50,100,.25)}
 #map{width:860px;height:460px}
 #gc{position:absolute;top:0;left:0;width:860px;height:460px;cursor:crosshair;z-index:1000}
-#ov{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.82);z-index:500}
+#ov{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.95);z-index:2000}
 #ov.show{display:flex}
 .mb{background:#fff;padding:26px 34px;text-align:center;max-width:420px;border:2px solid #b0c8dc;box-shadow:0 4px 16px rgba(0,50,100,.15)}
 .mb.win{border-color:#1a7a1a}.mb.lose{border-color:#c0200a}
@@ -51,6 +51,7 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
   <select id="selMap">
     <option value="hormuz">🗺️ STRAIT OF HORMUZ</option>
     <option value="bab">🗺️ BAB EL-MANDEB</option>
+    <option value="malacca">🗺️ MALACCA STRAIT</option>
   </select>
   <select id="selDiff">
     <option value="easy">EASY — 22 mines</option>
@@ -163,6 +164,45 @@ const MAPS = {
       "🔍 Iranian weapons cache suspected on Hanish Islands",
       "⚠️ Eritrean naval vessels spotted near southern channel",
       "📡 Lloyd's declares Bab el-Mandeb 'war risk zone'",
+    ]
+  },
+  malacca: {
+    name: 'MALACCA STRAIT',
+    subtitle: 'SINGAPORE STRAIT · PIRATES & TRAFFIC COLLIDE',
+    center: [2.5, 101.5],
+    zoom: 8,
+    mask: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,1,1],
+    ],
+    ticker: [
+      "📡 MALACCA COMMAND — Pirate activity reported in shipping lane",
+      "🛢️ Strait traffic: 25% of world trade passes through Malacca",
+      "⚠️ Indonesian naval patrol increases presence",
+      "📍 Container ship 'Maersk Jakarta' requests escort",
+      "🔍 Sonar contact: possible WWII wreckage at grid M12",
+      "📡 Singapore VTS: record 150 vessels in strait today",
+      "🛢️ Oil prices steady despite regional tensions",
+      "⚠️ Malaysian coast guard intercepts suspicious vessel",
+      "📍 UN maritime advisory: exercise caution in narrow channel",
+      "🔍 Smuggling network suspected using island hideouts",
     ]
   }
 };
@@ -407,9 +447,35 @@ const LOSE_MSGS_BAB=[
   "The strait claims another victim. Insurance rates spike.",
   "Navigational incident in Bab el-Mandeb. UN calls for restraint.",
 ];
+const WIN_MSGS_MALACCA=[
+  "Malacca Strait cleared. Singapore port authority thanks you.",
+  "Minefield neutralized. World trade can flow freely again.",
+  "Strait secured. Malaysian and Indonesian navies coordinate.",
+  "All mines found. The shipping companies breathe a sigh of relief.",
+  "Mission complete. Malacca is safe for passage.",
+  "Excellent work. Lloyd's of London reduces premiums for the strait.",
+];
+const LOSE_MSGS_MALACCA=[
+  "BOOM. Mine detonation in Malacca Strait. Singapore port goes on alert.",
+  "Your vessel sinks. World trade feels the impact.",
+  "KA-BOOM. Insurance premiums for Malacca spike 20%.",
+  "Direct hit. Malaysian navy launches investigation.",
+  "The strait claims another. Shipping lanes temporarily closed.",
+  "Navigational incident in Malacca. UN maritime advisory issued.",
+];
 
-function winMsgs() { return curMap().name.includes('HORMUZ') ? WIN_MSGS_HORMUZ : WIN_MSGS_BAB; }
-function loseMsgs() { return curMap().name.includes('HORMUZ') ? LOSE_MSGS_HORMUZ : LOSE_MSGS_BAB; }
+function winMsgs() {
+  const name = curMap().name;
+  if (name.includes('HORMUZ')) return WIN_MSGS_HORMUZ;
+  if (name.includes('BAB')) return WIN_MSGS_BAB;
+  return WIN_MSGS_MALACCA;
+}
+function loseMsgs() {
+  const name = curMap().name;
+  if (name.includes('HORMUZ')) return LOSE_MSGS_HORMUZ;
+  if (name.includes('BAB')) return LOSE_MSGS_BAB;
+  return LOSE_MSGS_MALACCA;
+}
 
 function showMsg(type) {
   const box=document.getElementById('msgbox');
@@ -421,7 +487,8 @@ function showMsg(type) {
     setStatus('CLEARED','ok');
     if (diff()==='realistic') {
       const nw=G.wave+1, nm=waveMines(nw);
-      const threat = curMap().name.includes('HORMUZ') ? 'Iran' : 'Houthis';
+      const threatMap = {'HORMUZ': 'Iran', 'BAB': 'Houthis', 'MALACCA': 'Pirates'};
+      const threat = threatMap[curMap().name.split(' ')[0]] || 'Enemies';
       waveEl.textContent=`⚠ WAVE ${nw}: ${threat} remotely deploys ${nm} fresh mines. Good luck, admiral.`;
       waveEl.style.display='';
       document.getElementById('btnNext').textContent=`FACE WAVE ${nw}`;
