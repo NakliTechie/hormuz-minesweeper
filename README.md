@@ -4,7 +4,7 @@ A Minesweeper-inspired browser game set in strategic maritime chokepoints. Clear
 
 ## Play
 
-**[▶ Play Now](https://naklitechie.github.io/hormuz-minesweeper/)** — Runs directly in your browser.
+**[▶ Play Now](https://naklitechie.github.io/strait-command/)** — Runs directly in your browser.
 
 ⭐ **Like it?** Give this repo a star!
 
