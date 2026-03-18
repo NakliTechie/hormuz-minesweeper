@@ -1,4 +1,4 @@
-# ☠ STRAIT MINEFIELD
+# ☠ STRAIT COMMAND
 
 A Minesweeper-inspired browser game set in strategic maritime chokepoints. Clear sea mines to open safe passage for oil tankers while hostile forces watch closely.
 
