@@ -52,6 +52,7 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
     <option value="hormuz">🗺️ STRAIT OF HORMUZ</option>
     <option value="bab">🗺️ BAB EL-MANDEB</option>
     <option value="malacca">🗺️ MALACCA STRAIT</option>
+    <option value="taiwan">🗺️ TAIWAN STRAIT</option>
   </select>
   <select id="selDiff">
     <option value="easy">EASY — 22 mines</option>
@@ -203,6 +204,45 @@ const MAPS = {
       "⚠️ Malaysian coast guard intercepts suspicious vessel",
       "📍 UN maritime advisory: exercise caution in narrow channel",
       "🔍 Smuggling network suspected using island hideouts",
+    ]
+  },
+  taiwan: {
+    name: 'TAIWAN STRAIT',
+    subtitle: 'CROSS-STRAIT TENSIONS · NAVIES WATCH CLOSELY',
+    center: [24.3, 119.4],
+    zoom: 8,
+    mask: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    ],
+    ticker: [
+      "📡 PLA EASTERN THEATER — Naval exercises announced",
+      "🛢️ Taiwan Strait: world's most watched shipping lane",
+      "⚠️ US Seventh Fleet monitoring strait transit",
+      "📍 Container ship 'Ever Forward' requests safe passage",
+      "🔍 Sonar contact: possible Cold War era mine at grid K8",
+      "📡 ROC Navy increases patrol frequency",
+      "🛢️ Semiconductor shipments delayed on strait tensions",
+      "⚠️ Chinese coast guard intercepts Taiwanese vessel",
+      "📍 UN calls for peaceful resolution of cross-strait disputes",
+      "🔍 Unidentified submarine contact reported by Japanese MSDF",
     ]
   }
 };
@@ -463,18 +503,36 @@ const LOSE_MSGS_MALACCA=[
   "The strait claims another. Shipping lanes temporarily closed.",
   "Navigational incident in Malacca. UN maritime advisory issued.",
 ];
+const WIN_MSGS_TAIWAN=[
+  "Taiwan Strait cleared. Semiconductor shipments resume.",
+  "Minefield neutralized. Cross-strait trade continues.",
+  "Strait secured. US Seventh Fleet acknowledges safe passage.",
+  "All mines found. Global markets breathe a sigh of relief.",
+  "Mission complete. Taiwan Strait is safe for navigation.",
+  "Excellent work. Lloyd's reduces war-risk premiums.",
+];
+const LOSE_MSGS_TAIWAN=[
+  "BOOM. Mine detonation in Taiwan Strait. Markets crash 3%.",
+  "Your vessel sinks. Cross-strait tensions escalate.",
+  "KA-BOOM. Semiconductor prices spike on shipping fears.",
+  "Direct hit. PLA and ROC both claim the other did it.",
+  "The strait claims another. UN Security Council meets urgently.",
+  "Navigational incident in Taiwan Strait. Seventh Fleet mobilizes.",
+];
 
 function winMsgs() {
   const name = curMap().name;
   if (name.includes('HORMUZ')) return WIN_MSGS_HORMUZ;
   if (name.includes('BAB')) return WIN_MSGS_BAB;
-  return WIN_MSGS_MALACCA;
+  if (name.includes('MALACCA')) return WIN_MSGS_MALACCA;
+  return WIN_MSGS_TAIWAN;
 }
 function loseMsgs() {
   const name = curMap().name;
   if (name.includes('HORMUZ')) return LOSE_MSGS_HORMUZ;
   if (name.includes('BAB')) return LOSE_MSGS_BAB;
-  return LOSE_MSGS_MALACCA;
+  if (name.includes('MALACCA')) return LOSE_MSGS_MALACCA;
+  return LOSE_MSGS_TAIWAN;
 }
 
 function showMsg(type) {
@@ -487,7 +545,7 @@ function showMsg(type) {
     setStatus('CLEARED','ok');
     if (diff()==='realistic') {
       const nw=G.wave+1, nm=waveMines(nw);
-      const threatMap = {'HORMUZ': 'Iran', 'BAB': 'Houthis', 'MALACCA': 'Pirates'};
+      const threatMap = {'HORMUZ': 'Iran', 'BAB': 'Houthis', 'MALACCA': 'Pirates', 'TAIWAN': 'PLA'};
       const threat = threatMap[curMap().name.split(' ')[0]] || 'Enemies';
       waveEl.textContent=`⚠ WAVE ${nw}: ${threat} remotely deploys ${nm} fresh mines. Good luck, admiral.`;
       waveEl.style.display='';

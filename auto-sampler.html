@@ -61,8 +61,8 @@ const COLS = 35, ROWS = 19;
 const CW = 860/COLS, CH = 460/ROWS;
 let waterCells = new Set();
 
-// Malacca Strait - centered on the strait waters
-const MAP_CENTER = [2.5, 101.5];
+// Taiwan Strait - centered between Xiamen (China) and Taichung (Taiwan)
+const MAP_CENTER = [24.3, 119.4];
 const MAP_ZOOM = 8;
 
 // Create map with ALL interactions disabled
@@ -117,7 +117,7 @@ function lockMap() {
   document.getElementById('btnLock').textContent = '✓ LOCKED';
   document.getElementById('status').style.display = 'block';
   setTimeout(() => {
-    document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Malacca Strait)`;
+    document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Taiwan Strait - Xiamen/Taichung)`;
   }, 500);
 }
 
@@ -251,7 +251,7 @@ drawGrid();
 // Auto-lock after 3 seconds
 setTimeout(() => {
   lockMap();
-  document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Malacca Strait)`;
+  document.getElementById('status').textContent = `✓ Map Locked! Ready to sample (Taiwan Strait - Xiamen/Taichung)`;
 }, 3000);
 </script>
 </body>
