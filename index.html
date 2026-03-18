@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>☠ HORMUZ MINEFIELD</title>
+<title>☠ STRAIT MINEFIELD</title>
 <!-- Built by @NakliTechie · https://github.com/NakliTechie/hormuz-minesweeper -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
@@ -37,8 +37,8 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
 </head>
 <body>
 
-<h1>☠ HORMUZ MINEFIELD</h1>
-<p class="sub">CLEAR SAFE PASSAGE FOR OIL TANKERS · IRGCN WATCHES CLOSELY</p>
+<h1>☠ STRAIT MINEFIELD</h1>
+<p class="sub" id="mapSub">CLEAR SAFE PASSAGE FOR OIL TANKERS · IRGCN WATCHES CLOSELY</p>
 
 <div id="hud">
   <div class="hb"><span class="hl">MINES LEFT</span><span class="hv" id="hMines">--</span></div>
@@ -48,6 +48,10 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
 </div>
 
 <div id="ctrl">
+  <select id="selMap">
+    <option value="hormuz">🗺️ STRAIT OF HORMUZ</option>
+    <option value="bab">🗺️ BAB EL-MANDEB</option>
+  </select>
   <select id="selDiff">
     <option value="easy">EASY — 22 mines</option>
     <option value="medium" selected>MEDIUM — 42 mines</option>
@@ -78,34 +82,90 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
 <script>
 'use strict';
 
-// ── PRE-COMPUTED LAND MASK ──────────────────────────────────────────────────
-// Sampled from CartoDB Voyager tiles at zoom 8, center (26.4, 56.5)
+// ── MAP DEFINITIONS ──────────────────────────────────────────────────────────
 // 1 = land, 0 = water (playable)
-// Water cells: 300 / 665
 
-const MASK = [
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-const WCELLS = 297;
+const MAPS = {
+  hormuz: {
+    name: 'STRAIT OF HORMUZ',
+    subtitle: 'CLEAR SAFE PASSAGE FOR OIL TANKERS · IRGCN WATCHES CLOSELY',
+    center: [26.4, 56.5],
+    mask: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+    ticker: [
+      "📡 IRGCN FEED — Awaiting deployment orders…",
+      "🛢️ Hormuz traffic: 17M barrels/day at risk",
+      "⚠️ Iranian patrol boats spotted near buoy line",
+      "📍 Tanker 'Nordic Star' requests safe passage",
+      "🔍 Sonar contact: possible mine at grid K7",
+      "📡 IRGCN communications intercepted — high alert",
+      "🛢️ Oil futures up 3% on strait tensions",
+      "⚠️ UAE naval command requests clearance update",
+      "📍 British destroyer HMS 'Dragon' transiting south",
+      "🔍 Unidentified contact — possible limpet mine",
+    ]
+  },
+  bab: {
+    name: 'BAB EL-MANDEB STRAIT',
+    subtitle: 'YEMEN COAST · HOUTHI REBELS PATROL THE BAB',
+    center: [12.65, 43.35],
+    zoom: 9,
+    mask: [
+      [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,1,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+    ticker: [
+      "📡 HOUTHI NAVAL COMMAND — Patrol boats deployed to strait",
+      "🛢️ Red Sea traffic: 4.8M barrels/day at transit risk",
+      "⚠️ Yemeni coast radar detects unidentified vessels",
+      "📍 Saudi tanker 'Al-Malik' requests escort through Bab",
+      "🔍 Sonar anomaly detected near Perim Island",
+      "📡 Coalition forces monitoring Houthi communications",
+      "🛢️ Brent crude up $2.40 on Red Sea disruption fears",
+      "⚠️ Djibouti port authority issues navigation warning",
+      "📍 UN aid ship 'WFP Zephyr' awaiting safe passage",
+      "🔍 Iranian weapons cache suspected on Hanish Islands",
+      "⚠️ Eritrean naval vessels spotted near southern channel",
+      "📡 Lloyd's declares Bab el-Mandeb 'war risk zone'",
+    ]
+  }
+};
 
 // ── GRID ─────────────────────────────────────────────────────────────────────
 
@@ -113,10 +173,8 @@ const MW = 860, MH = 460;
 const COLS = 35, ROWS = 19;
 const CW = MW / COLS, CH = MH / ROWS;
 
-// MASK is pre-computed above (sampled from actual map tiles)
-// buildMask is a no-op now since MASK is static
 function buildMask() {
-  // MASK already defined as constant above
+  // MAPS object contains all map masks
 }
 
 // ── GAME STATE ───────────────────────────────────────────────────────────────
@@ -124,11 +182,16 @@ function buildMask() {
 const BASE_MINES = {easy:22, medium:42, hard:65, realistic:42};
 let G = {};
 
+function curMap() { return MAPS[document.getElementById('selMap').value]; }
+function curMask() { return curMap().mask; }
+
 function diff() { return document.getElementById('selDiff').value; }
 
 function waveMines(w) {
   const base = BASE_MINES[diff()];
-  return diff()==='realistic' ? Math.min(base+(w-1)*13, WCELLS-25) : base;
+  const mask = curMask();
+  const wcells = mask.flat().filter(x=>x===0).length;
+  return diff()==='realistic' ? Math.min(base+(w-1)*13, wcells-25) : base;
 }
 
 function freshState(wave) {
@@ -142,11 +205,12 @@ function freshState(wave) {
 }
 
 function buildBoard(sr, sc) {
+  const mask = curMask();
   G.board = Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({mine:false,n:0})));
   const cands = [];
   for (let r=0;r<ROWS;r++)
     for (let c=0;c<COLS;c++)
-      if (!MASK[r][c] && !(Math.abs(r-sr)<=1 && Math.abs(c-sc)<=1)) cands.push([r,c]);
+      if (!mask[r][c] && !(Math.abs(r-sr)<=1 && Math.abs(c-sc)<=1)) cands.push([r,c]);
   for (let i=cands.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}
   const n = Math.min(G.mines, cands.length);
   for (let i=0;i<n;i++) G.board[cands[i][0]][cands[i][1]].mine=true;
@@ -163,11 +227,12 @@ function buildBoard(sr, sc) {
 }
 
 function flood(startR, startC) {
+  const mask = curMask();
   const q = [[startR, startC]];
   while (q.length) {
     const [r,c] = q.pop();
     if (r<0||r>=ROWS||c<0||c>=COLS) continue;
-    if (G.rev[r][c]||G.flag[r][c]||MASK[r][c]) continue;
+    if (G.rev[r][c]||G.flag[r][c]||mask[r][c]) continue;
     G.rev[r][c]=true;
     if (G.board[r][c].n===0&&!G.board[r][c].mine)
       for (let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(dr||dc) q.push([r+dr,c+dc]);
@@ -175,15 +240,17 @@ function flood(startR, startC) {
 }
 
 function checkWin() {
+  const mask = curMask();
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++)
-    if (!MASK[r][c]&&!G.board[r][c].mine&&!G.rev[r][c]) return false;
+    if (!mask[r][c]&&!G.board[r][c].mine&&!G.rev[r][c]) return false;
   return true;
 }
 
 function flagCount() { let n=0; for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(G.flag[r][c]) n++; return n; }
 
 function onCell(r,c) {
-  if (G.over||G.won||MASK[r][c]) return;
+  const mask = curMask();
+  if (G.over||G.won||mask[r][c]) return;
   if (G.flagMode) { if (!G.rev[r][c]){G.flag[r][c]=!G.flag[r][c]; hud(); draw();} return; }
   if (G.flag[r][c]||G.rev[r][c]) return;
   if (G.firstClick) {
@@ -204,7 +271,8 @@ function onCell(r,c) {
 }
 
 function onRightCell(r,c) {
-  if (G.over||G.won||G.firstClick||MASK[r][c]||G.rev[r][c]) return;
+  const mask = curMask();
+  if (G.over||G.won||G.firstClick||mask[r][c]||G.rev[r][c]) return;
   G.flag[r][c]=!G.flag[r][c]; hud(); draw();
 }
 
@@ -236,9 +304,10 @@ function cellPx(r, c) {
 }
 
 function draw() {
+  const mask = curMask();
   ctx.clearRect(0,0,canvas.width,canvas.height);
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-    if (MASK[r][c]) continue;
+    if (mask[r][c]) continue;
     const {x,y,w,h} = cellPx(r,c);
     const cell = G.board?G.board[r][c]:null;
     const rev=G.rev[r][c], flag=G.flag[r][c];
@@ -299,14 +368,14 @@ canvas.addEventListener('contextmenu',e=>{ e.preventDefault(); const c=evCell(e)
 canvas.addEventListener('mousemove',e=>{
   const c=evCell(e);
   const was=hover;
-  hover=(c&&!MASK[c[0]][c[1]])?c:null;
+  hover=(c&&!curMask()[c[0]][c[1]])?c:null;
   if (JSON.stringify(hover)!==JSON.stringify(was)) draw();
 });
 canvas.addEventListener('mouseleave',()=>{ hover=null; draw(); });
 
 // ── MESSAGES ─────────────────────────────────────────────────────────────────
 
-const WIN_MSGS=[
+const WIN_MSGS_HORMUZ=[
   "Strait cleared. Tankers are moving. Iranian naval command is furious.",
   "All mines neutralised. BP shareholders briefly celebrate.",
   "Lane secured. Iran denies placing any mines. Obviously.",
@@ -314,7 +383,15 @@ const WIN_MSGS=[
   "Oil prices drop $2. You're basically OPEC now.",
   "Excellent work. The Hormuz Authority files this under 'routine maintenance'.",
 ];
-const LOSE_MSGS=[
+const WIN_MSGS_BAB=[
+  "Bab el-Mandeb cleared. Shipping lanes open. Houthis are watching.",
+  "Minefield neutralized. Red Sea traffic resumes normal flow.",
+  "Strait secured. Saudi coalition forces acknowledge your work.",
+  "All mines found. The tankers thank you, admiral.",
+  "Mission complete. Bab el-Mandeb is safe for passage.",
+  "Excellent work. Lloyd's reduces war-risk premium for Red Sea.",
+];
+const LOSE_MSGS_HORMUZ=[
   "BOOM. Your vessel is now a debris field. Iran is shocked. Shocked.",
   "You found a mine. With your hull. IRGCN releases a statement of congratulations.",
   "KA-BOOM. Lloyd's of London is already on the phone.",
@@ -322,6 +399,17 @@ const LOSE_MSGS=[
   "The strait just got more complicated. Iran says it was a 'naval exercise'.",
   "Navigational incident logged. Oil futures spike 4%. Nice work.",
 ];
+const LOSE_MSGS_BAB=[
+  "BOOM. Mine detonation in Bab el-Mandeb. Houthis claim responsibility.",
+  "Your tanker is now a wreck. Yemen coast guard is notified.",
+  "KA-BOOM. Red Sea shipping just got more expensive.",
+  "Direct hit. Houthi rebels release a statement of approval.",
+  "The strait claims another victim. Insurance rates spike.",
+  "Navigational incident in Bab el-Mandeb. UN calls for restraint.",
+];
+
+function winMsgs() { return curMap().name.includes('HORMUZ') ? WIN_MSGS_HORMUZ : WIN_MSGS_BAB; }
+function loseMsgs() { return curMap().name.includes('HORMUZ') ? LOSE_MSGS_HORMUZ : LOSE_MSGS_BAB; }
 
 function showMsg(type) {
   const box=document.getElementById('msgbox');
@@ -329,11 +417,12 @@ function showMsg(type) {
   box.className='mb '+type;
   if (type==='win') {
     document.getElementById('msgTitle').textContent='✓ STRAIT CLEARED';
-    document.getElementById('msgBody').textContent=WIN_MSGS[Math.floor(Math.random()*WIN_MSGS.length)];
+    document.getElementById('msgBody').textContent=winMsgs()[Math.floor(Math.random()*winMsgs().length)];
     setStatus('CLEARED','ok');
     if (diff()==='realistic') {
       const nw=G.wave+1, nm=waveMines(nw);
-      waveEl.textContent=`⚠ WAVE ${nw}: Iran remotely deploys ${nm} fresh mines. Good luck, admiral.`;
+      const threat = curMap().name.includes('HORMUZ') ? 'Iran' : 'Houthis';
+      waveEl.textContent=`⚠ WAVE ${nw}: ${threat} remotely deploys ${nm} fresh mines. Good luck, admiral.`;
       waveEl.style.display='';
       document.getElementById('btnNext').textContent=`FACE WAVE ${nw}`;
     } else {
@@ -342,7 +431,7 @@ function showMsg(type) {
     }
   } else {
     document.getElementById('msgTitle').textContent='💥 MINE DETONATION';
-    document.getElementById('msgBody').textContent=LOSE_MSGS[Math.floor(Math.random()*LOSE_MSGS.length)];
+    document.getElementById('msgBody').textContent=loseMsgs()[Math.floor(Math.random()*loseMsgs().length)];
     waveEl.style.display='none';
     document.getElementById('btnNext').textContent='TRY AGAIN';
     setStatus('KIA','bad');
@@ -364,22 +453,15 @@ document.getElementById('btnFlag').addEventListener('click',()=>{
 
 // ── TICKER ───────────────────────────────────────────────────────────────────
 
-const TICKS=[
-  "📡 IRGCN FEED — Strait nominal. 3 VLCCs transiting eastbound.",
-  "⚓ US 5th Fleet: 'We're just here for the vibes.'",
-  "🛢️ Brent crude: elevated. Hormuz risk premium: also elevated.",
-  "🚢 Lloyd's of London increases Hormuz war-risk surcharge. Again.",
-  "📻 IRGCN spokesman: 'We have placed no mines. Why do you ask?'",
-  "🛸 NRO satellite detects cylindrical objects in shipping lane.",
-  "🇮🇷 Iranian state TV: 'Naval exercise proceeds entirely as planned.'",
-  "⚠️ UK MATO issues maritime advisory. Avoid southern approach.",
-  "🌊 Sea state: calm. Visibility: good. Mine count: classified.",
-  "📈 Insurance premiums up 40% since last incident. Nobody surprised.",
-  "🚤 IRGCN speedboats observed near tanker. 'Routine inspection.'",
-  "🔴 US CENTCOM: 'The situation is being monitored.' (It always is.)",
-];
 let ti=0;
-setInterval(()=>{ ti=(ti+1)%TICKS.length; document.getElementById('ticker').textContent=TICKS[ti]; },4200);
+setInterval(()=>{
+  const map = curMap();
+  const ticks = map.ticker || [];
+  if (ticks.length) {
+    ti=(ti+1)%ticks.length;
+    document.getElementById('ticker').textContent=ticks[ti];
+  }
+},4200);
 
 // ── LEAFLET ──────────────────────────────────────────────────────────────────
 
@@ -397,17 +479,28 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 
+function updateMapDisplay() {
+  const map = curMap();
+  MAP.setView(map.center, map.zoom || 8);
+  document.getElementById('mapSub').textContent = map.subtitle;
+}
+
 function startGame(wave=1) {
   freshState(wave);
   hud(); setStatus('READY');
   document.getElementById('btnFlag').textContent='🚩 FLAG: OFF';
   document.getElementById('btnFlag').classList.remove('on');
   document.getElementById('ov').classList.remove('show');
+  updateMapDisplay();
   draw();
 }
 
-// MASK is pre-computed, so we can start immediately
-buildMask();
+// Add map change listener
+document.getElementById('selMap').addEventListener('change', () => {
+  startGame(1);
+});
+
+// Start the game
 startGame(1);
 </script>
 <a href="https://github.com/NakliTechie/hormuz-minesweeper" style="position:fixed;bottom:8px;right:12px;font-size:10px;color:#889;text-decoration:none;opacity:0.6" target="_blank" rel="noopener">GitHub</a>

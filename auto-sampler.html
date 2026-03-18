@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bab el-Mandeb - Auto Sampler</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Courier New', monospace; background: #1a1a2e; color: #eee; padding: 10px; }
+h1 { margin-bottom: 10px; }
+#container { display: flex; gap: 15px; }
+#map { width: 860px; height: 460px; border: 3px solid #0d3b6e; }
+#panel { width: 380px; }
+.btn { padding: 10px 15px; font-size: 13px; cursor: pointer; margin: 3px; background: #0d3b6e; color: #fff; border: none; border-radius: 3px; }
+.btn:hover { background: #1a5f9e; }
+.btn.active { background: #c0200a; }
+.info { background: #2a2a4e; padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 12px; }
+#output { width: 100%; height: 280px; background: #000; color: #0f0; font-size: 9px; font-family: monospace; border: 1px solid #333; resize: none; }
+.stats { display: flex; gap: 15px; margin: 10px 0; }
+#status { padding: 8px; background: #0a0; color: #fff; border-radius: 3px; margin: 10px 0; display: none; }
+</style>
+</head>
+<body>
+<h1>🗺️ Bab el-Mandeb - Auto Sampler</h1>
+<div class="info">
+  <strong>Instructions:</strong>
+  <ol style="margin-left: 20px; margin-top: 5px;">
+    <li><strong>WAIT 5 seconds</strong> for map tiles to load</li>
+    <li>Click <strong>"🔒 LOCK MAP"</strong> to freeze the view</li>
+    <li>Click <strong>"🤖 AUTO-DETECT WATER"</strong> - samples actual map colors</li>
+    <li>Adjust threshold if needed, then click auto-detect again</li>
+    <li>Click cells to manually fix any errors</li>
+    <li>Click "📋 Generate Mask" and paste the output</li>
+  </ol>
+</div>
+<div id="container">
+  <div style="position: relative;">
+    <div id="map"></div>
+  </div>
+  <div id="panel">
+    <button class="btn" id="btnLock" onclick="lockMap()">🔒 LOCK MAP</button>
+    <button class="btn" onclick="autoDetect()">🤖 AUTO-DETECT WATER</button>
+    <button class="btn" onclick="clearAll()">🗑️ Clear</button>
+    <div id="status">✓ Map Locked!</div>
+    <div class="info">
+      <div>Water Threshold: <input type="range" id="threshold" min="20" max="80" value="45" style="width:150px;"></div>
+      <div style="font-size:10px; color:#aaa; margin-top:5px;">Lower = more land | Higher = more water</div>
+    </div>
+    <div class="stats">
+      <span>Water: <strong id="waterCount" style="color:#4af">0</strong></span>
+      <span>Land: <strong id="landCount" style="color:#fa4">0</strong></span>
+    </div>
+    <button class="btn" onclick="generateMask()">📋 Generate Mask</button>
+    <button class="btn" onclick="copyMask()">📋 Copy</button>
+    <textarea id="output" placeholder="Generated mask will appear here..."></textarea>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const COLS = 35, ROWS = 19;
+const CW = 860/COLS, CH = 460/ROWS;
+let waterCells = new Set();
+
+// Create map with ALL interactions disabled
+const MAP = L.map('map', {
+  center: [12.65, 43.35],
+  zoom: 9,
+  zoomControl: false,
+  attributionControl: true,
+  dragging: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  touchZoom: false,
+  keyboard: false
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '©OSM ©CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19,
+  crossOrigin: true
+}).addTo(MAP);
+
+const grid = L.layerGroup().addTo(MAP);
+
+function drawGrid() {
+  grid.clearLayers();
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const key = `${r},${c}`;
+      const isWater = waterCells.has(key);
+      
+      const lat1 = MAP.unproject([c * CW, r * CH], 9).lat;
+      const lng1 = MAP.unproject([c * CW, r * CH], 9).lng;
+      const lat2 = MAP.unproject([(c+1) * CW, (r+1) * CH], 9).lat;
+      const lng2 = MAP.unproject([(c+1) * CW, (r+1) * CH], 9).lng;
+      
+      const bounds = [[lat1, lng1], [lat2, lng2]];
+      L.rectangle(bounds, {
+        color: isWater ? '#0066cc' : '#666',
+        weight: 1,
+        fill: true,
+        fillColor: isWater ? '#0066cc' : '#888888',
+        fillOpacity: isWater ? 0.6 : 0.4
+      }).addTo(grid);
+    }
+  }
+  updateStats();
+}
+
+function lockMap() {
+  MAP.setView([12.65, 43.35], 9);
+  document.getElementById('btnLock').textContent = '✓ LOCKED';
+  document.getElementById('status').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('status').textContent = '✓ Map Locked! Ready to sample.';
+  }, 500);
+}
+
+function getCellFromEvent(e) {
+  const rect = document.getElementById('map').getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const c = Math.floor(x / CW);
+  const r = Math.floor(y / CH);
+  if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+    return `${r},${c}`;
+  }
+  return null;
+}
+
+// Manual override - click to toggle
+document.getElementById('map').addEventListener('click', (e) => {
+  const key = getCellFromEvent(e);
+  if (key) {
+    if (waterCells.has(key)) {
+      waterCells.delete(key);
+    } else {
+      waterCells.add(key);
+    }
+    drawGrid();
+  }
+});
+
+function autoDetect() {
+  const threshold = parseInt(document.getElementById('threshold').value) / 100;
+  
+  // Sample from visible map tiles
+  const tiles = document.querySelectorAll('.leaflet-tile-pane img');
+  const mapEl = document.getElementById('map');
+  const mapRect = mapEl.getBoundingClientRect();
+  
+  // Create off-screen canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = 860;
+  canvas.height = 460;
+  const ctx = canvas.getContext('2d');
+  
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 860, 460);
+  
+  // Composite all tiles
+  let tilesLoaded = 0;
+  tiles.forEach(img => {
+    const rect = img.getBoundingClientRect();
+    const x = rect.left - mapRect.left;
+    const y = rect.top - mapRect.top;
+    if (x >= -256 && x <= 860 && y >= -256 && y <= 460) {
+      try {
+        ctx.drawImage(img, x, y);
+        tilesLoaded++;
+      } catch(e) {}
+    }
+  });
+  
+  console.log(`Composited ${tilesLoaded} tiles`);
+  
+  // Sample each cell center
+  const imageData = ctx.getImageData(0, 0, 860, 460);
+  const data = imageData.data;
+  waterCells.clear();
+  
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cx = Math.floor((c + 0.5) * CW);
+      const cy = Math.floor((r + 0.5) * CH);
+      const idx = (cy * 860 + cx) * 4;
+      
+      const rVal = data[idx];
+      const gVal = data[idx + 1];
+      const bVal = data[idx + 2];
+      const brightness = (rVal + gVal + bVal) / 3 / 255;
+      
+      // Water detection:
+      // - CartoDB water: light blue (#C3E8F5) - B > R, high brightness
+      // - CartoDB land: cream/white (#F8F6F0) - R,G,B all high, R >= B
+      const isBlueish = bVal > rVal + 15;
+      const isBright = brightness > 0.7;
+      const isWater = isBlueish && isBright && brightness < threshold + 0.3;
+      
+      if (isWater) {
+        waterCells.add(`${r},${c}`);
+      }
+    }
+  }
+  
+  drawGrid();
+  document.getElementById('status').textContent = `✓ Auto-detected ${waterCells.size} water cells`;
+  document.getElementById('status').style.display = 'block';
+}
+
+function updateStats() {
+  document.getElementById('waterCount').textContent = waterCells.size;
+  document.getElementById('landCount').textContent = COLS*ROWS - waterCells.size;
+}
+
+function clearAll() {
+  waterCells.clear();
+  drawGrid();
+  document.getElementById('output').value = '';
+}
+
+function generateMask() {
+  let out = 'mask: [\n';
+  for (let r = 0; r < ROWS; r++) {
+    const row = [];
+    for (let c = 0; c < COLS; c++) {
+      row.push(waterCells.has(`${r},${c}`) ? 0 : 1);
+    }
+    out += '      [' + row.join(',') + '],\n';
+  }
+  out += '    ]';
+  document.getElementById('output').value = out;
+}
+
+function copyMask() {
+  const output = document.getElementById('output');
+  output.select();
+  document.execCommand('copy');
+  alert('Mask copied!');
+}
+
+// Initialize
+drawGrid();
+
+// Auto-lock after 3 seconds
+setTimeout(() => {
+  lockMap();
+}, 3000);
+</script>
+</body>
+</html>
