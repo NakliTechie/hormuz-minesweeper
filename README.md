@@ -127,6 +127,12 @@ Open `auto-sampler.html` in your browser. This tool:
 
 ---
 
+## See Also
+
+**[Chokepoint](https://github.com/NakliTechie/chokepoint)** — same maps, different genre. A tower defense game where you build coastal batteries and hold the strait against waves of enemy ships.
+
+---
+
 ## License
 
 Public domain / MIT — use it however you want.
