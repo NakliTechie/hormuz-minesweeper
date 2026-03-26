@@ -133,6 +133,30 @@ Open `auto-sampler.html` in your browser. This tool:
 
 ---
 
+## Part of the NakliTechie series
+
+| Tool | What it does |
+|------|--------------|
+| [**BabelLocal**](https://github.com/NakliTechie/BabelLocal) | Offline translation — 200 languages, NLLB model |
+| [**StripLocal**](https://github.com/NakliTechie/StripLocal) | EXIF metadata stripper — nothing leaves the browser |
+| [**GambitLocal**](https://github.com/NakliTechie/GambitLocal) | Chess vs Stockfish — correspondence mode via URL |
+| [**VoiceVault**](https://github.com/NakliTechie/VoiceVault) | Audio transcription — Whisper, offline-first |
+| [**KingMe**](https://github.com/NakliTechie/KingMe) | English draughts — custom minimax AI, zero deps |
+| [**SnipLocal**](https://github.com/NakliTechie/SnipLocal) | Background remover — RMBG-1.4, passport mode |
+| [**Clacker**](https://github.com/NakliTechie/Clacker) | Split-flap display — browser-native, offline |
+| **Strait Command** | Mine-clearing game in strategic waterways |
+| [**Chokepoint**](https://github.com/NakliTechie/chokepoint) | Maritime tower defense — hold the strait |
+| [**PredictionMarket**](https://github.com/NakliTechie/PredictionMarket) | Prediction market simulator — Parimutuel & LMSR |
+| **PDFLOcal** | PDF editor — merge, split, rotate, annotate |
+| **RangeLocal** | Missile range simulator — interactive globe & map |
+| [**3D Tic-Tac-Toe**](https://github.com/NakliTechie/3d-tic-tac-toe) | 3D tic-tac-toe — 3×3×3 to 5×5×5, minimax AI |
+
+---
+
+**Built by [Chirag Patnaik](https://github.com/NakliTechie)**
+
+---
+
 ## License
 
 Public domain / MIT — use it however you want.
