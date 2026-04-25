@@ -7,31 +7,37 @@
 <!-- Built by @NakliTechie · https://github.com/NakliTechie/strait-command -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
+/* Rangrez · scandinavia-01 · SNÖ — first snowfall, frozen lake */
+:root{
+  --body:#f6f8f8; --panel:#ffffff; --ink:#0f1420;
+  --brand:#9c3a28; --act:#1a5a6a; --ok:#2a5a3a; --row:#eef0f0;
+  --ink-soft:#5a6a78; --line:#b8c8d0;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#dce8f0;color:#1a2a3a;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100vh}
-h1{color:#0d3b6e;font-size:1.55rem;letter-spacing:4px;margin-bottom:3px}
-.sub{font-size:.68rem;color:#5a7a9a;letter-spacing:2px;margin-bottom:10px}
-#hud{display:flex;gap:24px;background:#fff;border:2px solid #b0c8dc;padding:8px 20px;margin-bottom:8px;align-items:center;box-shadow:0 2px 6px rgba(0,50,100,.1)}
+body{background:var(--body);color:var(--ink);font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100vh}
+h1{color:var(--act);font-size:1.55rem;letter-spacing:4px;margin-bottom:3px}
+.sub{font-size:.68rem;color:var(--ink-soft);letter-spacing:2px;margin-bottom:10px}
+#hud{display:flex;gap:24px;background:var(--panel);border:2px solid var(--line);padding:8px 20px;margin-bottom:8px;align-items:center;box-shadow:0 2px 6px rgba(15,20,32,.08)}
 .hb{text-align:center}
-.hl{font-size:.58rem;color:#7a9ab0;letter-spacing:1px;display:block;text-transform:uppercase}
-.hv{font-size:1.25rem;color:#0d3b6e;font-weight:bold;min-width:58px;display:block}
-.hv.ok{color:#1a7a1a}.hv.bad{color:#c0200a}
+.hl{font-size:.58rem;color:var(--ink-soft);letter-spacing:1px;display:block;text-transform:uppercase}
+.hv{font-size:1.25rem;color:var(--act);font-weight:bold;min-width:58px;display:block}
+.hv.ok{color:var(--ok)}.hv.bad{color:var(--brand)}
 #ctrl{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-select,button{background:#fff;border:2px solid #b0c8dc;color:#0d3b6e;padding:5px 11px;font-family:'Courier New',monospace;font-size:.76rem;cursor:pointer;letter-spacing:1px;transition:all .15s;box-shadow:0 1px 3px rgba(0,50,100,.1)}
-button:hover{background:#e0edf7;border-color:#0d3b6e}
-button.on{background:#c0200a;border-color:#a01808;color:#fff}
-#wrap{position:relative;border:3px solid #0d3b6e;box-shadow:0 4px 18px rgba(0,50,100,.25)}
+select,button{background:var(--panel);border:2px solid var(--line);color:var(--act);padding:5px 11px;font-family:'Courier New',monospace;font-size:.76rem;cursor:pointer;letter-spacing:1px;transition:all .15s;box-shadow:0 1px 3px rgba(15,20,32,.08)}
+button:hover{background:var(--row);border-color:var(--act)}
+button.on{background:var(--brand);border-color:#7a2a1a;color:var(--panel)}
+#wrap{position:relative;border:3px solid var(--act);box-shadow:0 4px 18px rgba(15,20,32,.22)}
 #map{width:860px;height:460px}
 #gc{position:absolute;top:0;left:0;width:860px;height:460px;cursor:crosshair;z-index:1000}
-#ov{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.95);z-index:2000}
+#ov{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(246,248,248,.95);z-index:2000}
 #ov.show{display:flex}
-.mb{background:#fff;padding:26px 34px;text-align:center;max-width:420px;border:2px solid #b0c8dc;box-shadow:0 4px 16px rgba(0,50,100,.15)}
-.mb.win{border-color:#1a7a1a}.mb.lose{border-color:#c0200a}
-.mb h2{font-size:1.2rem;margin-bottom:10px;letter-spacing:2px;color:#0d3b6e}
-.mb.win h2{color:#1a7a1a}.mb.lose h2{color:#c0200a}
-.mb p{color:#4a6a80;font-size:.78rem;margin-bottom:4px;line-height:1.5}
-.mb .wa{color:#c05000;font-size:.76rem;margin-top:8px;margin-bottom:14px;font-weight:bold}
-#ticker{margin-top:8px;font-size:.62rem;color:#6a8a9a;letter-spacing:1px;max-width:860px}
+.mb{background:var(--panel);padding:26px 34px;text-align:center;max-width:420px;border:2px solid var(--line);box-shadow:0 4px 16px rgba(15,20,32,.15)}
+.mb.win{border-color:var(--ok)}.mb.lose{border-color:var(--brand)}
+.mb h2{font-size:1.2rem;margin-bottom:10px;letter-spacing:2px;color:var(--act)}
+.mb.win h2{color:var(--ok)}.mb.lose h2{color:var(--brand)}
+.mb p{color:var(--ink-soft);font-size:.78rem;margin-bottom:4px;line-height:1.5}
+.mb .wa{color:#a85020;font-size:.76rem;margin-top:8px;margin-bottom:14px;font-weight:bold}
+#ticker{margin-top:8px;font-size:.62rem;color:var(--ink-soft);letter-spacing:1px;max-width:860px}
 .leaflet-control-attribution{font-size:9px!important}
 </style>
 </head>
@@ -62,7 +68,7 @@ button.on{background:#c0200a;border-color:#a01808;color:#fff}
   </select>
   <button id="btnNew">◼ NEW GAME</button>
   <button id="btnFlag">🚩 FLAG: OFF</button>
-  <span style="font-size:.68rem;color:#223">· right-click also flags</span>
+  <span style="font-size:.68rem;color:#5a6a78">· right-click also flags</span>
 </div>
 
 <div id="wrap">
@@ -374,7 +380,8 @@ function setStatus(txt,cls='') {
 
 const canvas = document.getElementById('gc');
 const ctx = canvas.getContext('2d');
-const NC = ['','#0d5fba','#1a7a1a','#c05000','#c0200a','#8800aa','#008888','#333','#777'];
+/* Minesweeper number colours, mapped onto SNÖ tones */
+const NC = ['','#1a5a6a','#2a5a3a','#a85020','#9c3a28','#6a3a8a','#1a7a8a','#0f1420','#5a6a78'];
 let hover = null;
 
 function cellPx(r, c) {
@@ -395,23 +402,26 @@ function draw() {
     const isHit = G.hitCell&&G.hitCell[0]===r&&G.hitCell[1]===c;
 
     if (rev) {
-      ctx.fillStyle = (cell&&cell.mine) ? (isHit?'rgba(220,40,20,.90)':'rgba(200,60,40,.80)') : 'rgba(215,232,248,.88)';
+      // mine hit = bright brand red; mine reveal = darker brand; safe = pale row
+      ctx.fillStyle = (cell&&cell.mine) ? (isHit?'rgba(180,46,30,.92)':'rgba(156,58,40,.82)') : 'rgba(238,240,240,.90)';
     } else if (flag) {
-      ctx.fillStyle='rgba(255,235,210,.90)';
+      // flag = warm brand-tinted highlight on cool body
+      ctx.fillStyle='rgba(216,180,150,.78)';
     } else {
-      ctx.fillStyle=isHover?'rgba(180,180,190,.75)':'rgba(150,150,160,.60)';
+      // unrevealed sea = cool steel, hover lifts toward act-teal
+      ctx.fillStyle=isHover?'rgba(184,200,208,.85)':'rgba(154,178,190,.70)';
     }
     ctx.fillRect(x,y,w,h);
 
     // Border: raised-look for unrevealed (light top-left, dark bottom-right)
     if (!rev && !flag) {
-      ctx.strokeStyle='rgba(200,200,210,.90)';
+      ctx.strokeStyle='rgba(220,232,238,.92)';
       ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.moveTo(x+1,y+h-1); ctx.lineTo(x+1,y+1); ctx.lineTo(x+w-1,y+1); ctx.stroke();
-      ctx.strokeStyle='rgba(100,100,120,.75)';
+      ctx.strokeStyle='rgba(58,80,92,.70)';
       ctx.beginPath(); ctx.moveTo(x+1,y+h-1); ctx.lineTo(x+w-1,y+h-1); ctx.lineTo(x+w-1,y+1); ctx.stroke();
     } else {
-      ctx.strokeStyle='rgba(120,120,140,.55)';
+      ctx.strokeStyle='rgba(90,106,120,.55)';
       ctx.lineWidth=1;
       ctx.strokeRect(x+.5,y+.5,w-1,h-1);
     }

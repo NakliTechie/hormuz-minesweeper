@@ -63,6 +63,12 @@ No build step, no dependencies — single HTML file (~500 lines).
 - CartoDB Voyager tiles (light theme basemap)
 - Vanilla JavaScript, no frameworks
 
+## Palette
+
+Coloured with **`scandinavia-01 · SNÖ`** — first snowfall, frozen lake; the coolest white in the library. Reads as a Nordic naval chart: frosty body, deep-teal command rules, brick-red mine alerts.
+
+Palette pulled from [**Rangrez**](https://github.com/NakliTechie/rangrez), the global colour-palette library that backs all NakliTechie projects.
+
 ---
 
 ## 🤖 For Agents: Adding New Maps
